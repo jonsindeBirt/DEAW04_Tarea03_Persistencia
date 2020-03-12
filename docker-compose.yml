@@ -1,0 +1,63 @@
+# Versión utilizada
+# La versión 3 es la más utilizada y la que se recomienda
+version: '3'
+
+# Configuración de los servidores que vamos a necesitar
+services: 
+ 
+  # mysql es el nombre que vamos a dar a este primer servidor
+  # Será el nombre que tendremos que usar cuando nos refiramos a él
+  mysql:
+    # Si queremos darle un nombre conocido al contenedor Docker que se cree podemos usar
+    # container_name: mysql
+
+    # Tenemos un Dockerfile en la carpeta mysql para crear una imagen con los scripts
+    # que queremos que se ejecuten en la BBDD MYSQL_DATABASE
+    image: mysql:5.7
+    command: --innodb_use_native_aio=0
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: dwes
+      MYSQL_PASSWORD: dwes
+      MYSQL_DATABASE: dwes
+    volumes: 
+      # - ./.data/conf:/etc/mysql/conf.d
+      - ./bbdd:/var/lib/mysql/
+
+  # Usamos la imagen oficial de phpMyAdmin
+  # Redireccionamos el puerto 80 que usa al 8080 para que no entre en conflicto con Apache
+  # Configuramos las variables necesarias para que conecte con el servidor mysql
+  phpmyadmin:
+    # container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - 8080:80
+    environment:
+      # Conecta directamente con el servidor mysql del proyecto
+      PMA_HOST: mysql
+      # Si queremos conectar con diferentes servidores podemos usar
+      # - PMA_ARBITRARY=1
+      
+    # Tenemos un Dockerfile en la carpeta apache para crear la imagen que queremos usar
+    # Creamos el volumen proyecto que usará también el servidor php
+  apache:
+    # container_name: apache
+    build: apache/
+    ports:
+      - 80:80
+    volumes:
+      - ./proyecto:/var/www/html/
+
+  php:
+    # container_name: php
+    build: php/
+    ports:
+      - 9000:9000
+    volumes:
+      - ./proyecto:/var/www/html/
+
+volumes: 
+  proyecto:
+  bbdd:
